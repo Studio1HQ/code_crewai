@@ -2,8 +2,6 @@
 
 This repository demonstrates how to build a Multi-Agent System using [Novita](https://novita.ai/) as the model provider and [CrewAI](https://docs.crewai.com/) as the multi-agent orchestration framework.
 
----
-
 ## Table of Contents
 
 - [Overview](#overview)
@@ -14,15 +12,11 @@ This repository demonstrates how to build a Multi-Agent System using [Novita](ht
 - [Usage](#usage)
 - [References](#references)
 
----
-
 ## Overview
 
 This repo contains two multi-agent system implementations:
 - **Research Crew**: A class-based crew of agents that perform research tasks.
 - **Customer Support Flow**: A flow-based agent for customer support automation.
-
----
 
 ## Project Structure
 
@@ -37,15 +31,12 @@ README.md
 CustomerSupportFlowPlot.html
 ```
 
----
-
 ## Prerequisites
 
 - Python 3.11+
 - [Novita API Key](https://novita.ai/)
 - [CrewAI](https://pypi.org/project/crewai/)
 
----
 
 ## Installation
 
@@ -65,8 +56,6 @@ CustomerSupportFlowPlot.html
    ```sh
    pip install crewai novita
    ```
-
----
 
 ## Configuration
 
@@ -99,8 +88,6 @@ CustomerSupportFlowPlot.html
   ```sh
   python old_crew.py
   ```
-
----
 
 ## References
 
