@@ -1,117 +1,118 @@
 import os
-from crewai import Agent, Crew, Process, Task, LLM
+from crewai import Agent, Task, Crew, Process, LLM
+from crewai_tools import FileWriterTool
 
-# Define the LLMs for each agent
-researcher_llm = LLM(
-    model="novita/deepseek/deepseek-r1-turbo",
+# === Tools ===
+file_writer_tool = FileWriterTool()
+
+# === LLMs for each agent ===
+architect_llm = LLM(
+    model="novita/moonshotai/kimi-k2-instruct",
     temperature=0.5,
     api_base="https://api.novita.ai/v3/openai",
     api_key=os.environ['NOVITA_API_KEY']
 )
 
-outliner_llm = LLM(
-    model="novita/meta-llama/llama-3.1-8b-instruct",
+coder_llm = LLM(
+    model="novita/qwen/qwen3-coder-480b-a35b-instruct",
     temperature=0.4,
     api_base="https://api.novita.ai/v3/openai",
     api_key=os.environ['NOVITA_API_KEY']
 )
 
-writer_llm = LLM(
-    model="novita/meta-llama/llama-3.3-70b-instruct",
-    temperature=0.4,
+reviewer_llm = LLM(
+    model="novita/moonshotai/kimi-k2-instruct",
+    temperature=0.5,
     api_base="https://api.novita.ai/v3/openai",
     api_key=os.environ['NOVITA_API_KEY']
 )
 
-# Define the agents with their roles, goals, and backstories
-researcher = Agent(
-    role='Senior Research Specialist for {topic}',
-    goal="Find comprehensive and accurate information about {topic} with a focus on recent developments and key insights",  
-    backstory="""You are an experienced research specialist with a talent for finding relevant information from various sources. 
-                 You excel at organizing information in a clear and structured manner, making complex topics accessible to others.""",
-    llm=researcher_llm,
+# === Agent Definitions ===
+
+architect = Agent(
+    role="Software Architect for MVP Projects",
+    goal="Define a basic system structure and simple feature set to guide MVP development",
+    backstory="""You specialize in quickly outlining software architectures and project scopes for 
+minimum viable products. Your plans help guide coders with enough structure to get started while staying lean.""",
+    llm=architect_llm,
     verbose=True
 )
 
-outliner = Agent(
-    role='Content Structuring Expert for {topic}',
-    goal="""Develop a logical and engaging outline that reflects 
-            the research findings and provides a solid structure 
-            for writing a full article""",  
-    backstory="""You are a content strategist with a background in instructional design
-            and technical writing. You're known for your ability to organize complex
-            material into easy-to-follow formats that improve clarity and flow.""",
-    llm=outliner_llm,
-    verbose=True
+coder = Agent(
+    role="Developer for MVP Projects",
+    goal="Implement the MVP using simple, clear code, and write all necessary code files using the FileWriter tool",
+    backstory="""You're a practical developer focused on speed. You prioritize working code over polish. 
+Simulate any runtime behavior if needed, and make sure to keep code clear and modular.""",
+    llm=coder_llm,
+    verbose=True,
+    tools=[file_writer_tool]
 )
 
-writer = Agent(
-    role='Research Article Writer on {topic}',
-    goal="""Write a well-structured, engaging research article using the outline 
-            and research findings""",  
-    backstory="""You are a skilled writer with a background in journalism and scientific
-                 communication. You take pride in transforming data and outlines into
-                 polished narratives that are informative and enjoyable to read.""",
-    llm=writer_llm,
-    verbose=True
+reviewer = Agent(
+    role="Code Reviewer for MVP Projects",
+    goal="Read the code files, provide helpful feedback, and write improvements as diffs into a markdown file",
+    backstory="""You're a fast but thoughtful reviewer. You check code for clarity, obvious bugs, and 
+provide improvements as diffs. Instead of modifying code directly, you save your suggestions in a markdown file 
+for easy inspection.""",
+    llm=reviewer_llm,
+    verbose=True,
+    tools=[file_writer_tool]
 )
 
-research_task = Task(
+# === Tasks ===
+
+architect_task = Task(
     description="""
-        Conduct thorough research on {topic}. Focus on:
-        1. Key concepts and definitions
-        2. Historical development and recent trends
-        3. Major challenges and opportunities
-        4. Notable applications or case studies
-        5. Future outlook and potential developments
-
-        Make sure to organize your findings in a structured format with clear sections.
-    """,
+Create a basic plan for building a simple MVP version of a {project}.
+Focus on the core features, basic file structure, and tech stack.
+Make the structure minimal but enough to get a working demo.
+""",
     expected_output="""
-        A comprehensive research document with well-organized sections covering
-        all the requested aspects of {topic}. Include specific facts, figures,
-        and examples where relevant.
-    """,
-    agent=researcher,
+A simple architectural overview with:
+- Project goals
+- Key components or files
+- Basic data flow or structure
+""",
+    agent=architect,
+    output_file="architecture.md"
 )
 
-outline_task = Task(
+coder_task = Task(
     description="""
-        Based on the research findings, create a detailed outline for a research article.
-        The outline should:
-        1. Include an introduction and conclusion
-        2. Clearly structure the main body with logical headings and subheadings
-        3. Ensure the flow of information builds progressively and coherently
-        4. Align with the expected audience (e.g., technical, general)
-        """,
+Based on the architect's plan, implement the core parts of the {project} MVP.
+Keep it lean and functional. Use the FileWriter tool to save all your code files.
+If you need to simulate behavior (e.g. without a real interpreter), do so with clear comments or mocked logic.
+""",
     expected_output="""
-        A clean, detailed outline with clear headings and subheadings that reflects
-        the structure of the future article.
-        """,
-    agent=outliner,
-    context=[research_task]
+Working code files saved using the FileWriter tool that implement the key features defined in the plan.
+Code should be readable and logically structured.
+""",
+    agent=coder,
+    context=[architect_task]
 )
 
-writing_task = Task(
+review_task = Task(
     description="""
-        Use the research findings and the outline to write a comprehensive,
-        engaging, and well-structured research article on {topic}.
-        """,
+Review the code files created for the {project} MVP. Read each file using the FileRead tool.
+Suggest improvements using diffs. Do not modify the original code files directly.
+Instead, save all your suggested diffs into a markdown file using the FileWriter tool.
+""",
     expected_output="""
-        A polished article written in markdown format with clear sections, strong
-        narrative flow, and citations or links to data sources if applicable.
-        """,
-    agent=outliner,
-    context=[research_task, outline_task],
-    output_file="research_article.md"
+A markdown file containing diff-style suggestions for each file reviewed.
+""",
+    agent=reviewer,
+    context=[coder_task],
+    output_file="code_review_diffs.md"
 )
 
-research_crew = Crew(
-    agents=[researcher, outliner, writer],
-    tasks=[research_task, outline_task, writing_task],
+# === Crew Definition ===
+
+code_crew = Crew(
+    agents=[architect, coder, reviewer],
+    tasks=[architect_task, coder_task, review_task],
     process=Process.sequential,
     verbose=True
 )
 
 if __name__ == "__main__":
-    research_crew.kickoff(inputs={"topic": "Multi-Agent Systems"})
+    code_crew.kickoff(inputs={"project": "Todo App"})
