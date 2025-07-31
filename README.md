@@ -41,7 +41,7 @@ README.md
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/Studio1HQ/novita_crewai.git
+   git clone https://github.com/Studio1HQ/code_crewai.git
    cd novita_crewai
    ```
 
