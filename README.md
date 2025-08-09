@@ -21,9 +21,8 @@ This repo contains two multi-agent system implementations:
 ## Project Structure
 
 ```
-crew.py                # Class-based crew for research tasks
+crew.py                # Class-based crew for generating an MVP code base
 flow.py                # Flow-based customer support agent
-old_crew.py            # Legacy crew definition
 config/
   ├── agents.yaml      # Agent definitions
   └── tasks.yaml       # Task definitions
@@ -81,11 +80,6 @@ README.md
 - **Run the customer support flow:**
   ```sh
   python flow.py
-  ```
-
-- **Legacy crew (for reference):**
-  ```sh
-  python old_crew.py
   ```
 
 ## References
